@@ -1,0 +1,1 @@
+The current draft of the paper has poor formatting because it was copy and pasted from a word document. This will be fixed in later iterations, but to read the current draft, please refer to the following Google Doc: https://docs.google.com/document/d/1sWeOuqokVhwK3anE_Bqky55olut5Voj9k6Mc9OqDAjA/edit
