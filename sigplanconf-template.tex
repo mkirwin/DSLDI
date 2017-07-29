@@ -111,54 +111,6 @@ This is the text of the abstract.
 \section{Introduction}
 
 \section{Design}
-
-\begin{figure}
-	
-	\begin{lstlisting}[frame=single, backgroundcolor=\color{light-gray}, basicstyle=\footnotesize\ttfamily, numbers=left, numberstyle=\tiny\color{black},caption= {Simple 3-tier web application architecture}]
-component Client
-	port getInfo: requires CSIface
-
-component Server
-	port sendInfo: provides CSIface
-
-external component DB
-	port dbIface: target DBModule
-
-connector JDBCCtr
-	val connectionString: String
-
-architecture 
-	components
-		RequestHandler ch
-		DB db
-
-connectors 
-	JDBCCtr jdbcCtr
-
-attachments
-	connect rh.dbIface and db.dbIface 
-		with jdbcCtr
-
-bindings 
-	sendInfo is rh.sendInfo
-
-architecture 	
-	components
-		Client client
-		Server server
-
-	connectors
-		JSONCtr jsonCtr
-
-	attachments 
-		Connect client.getInfo 
-		and server.sendInfo with jsonCtr
-
-	entryPoints
-		Client: start
-	\end{lstlisting}
-
-\end{figure}
 	
 	Trinity is designed to unify software architecture design and implementation for not just a single architecture view, but in all three (module, component-and-connector, and deployment). 
 
@@ -166,6 +118,53 @@ architecture
 
 	The client and server have their own component-specific architectures given before the general architecture code. Both components have corresponding ports that depend on a client-server interface, denoted by the “requires/provides CSIface” types of each port. This interface is required of a server by the client, as stated by the “requires CSIFace” type, and the server fulfills it, as shown by the “provides CSIface” server port type. The database is an external component of the server, which differs from a component in that the programmer does not provide its source code. “port dbIface: requires DBModule” The database and server are connected by a JDBC connector. This is used within a sub-architecture of the server that connects a specified request handler and the database. Finally, the bindings section of the server’s sub-architecture specifies that the client-facing port, sendInfo, of the server component is indeed the same sendInfo port of the request handler. 
 
+\begin{figure}
+	
+	\begin{lstlisting}[frame=single, backgroundcolor=\color{light-gray}, basicstyle=\footnotesize\ttfamily, numbers=left, numberstyle=\tiny\color{black},caption= {Simple 3-tier web application architecture}]
+	component Client
+	port getInfo: requires CSIface
+	
+	component Server
+	port sendInfo: provides CSIface
+	
+	external component DB
+	port dbIface: target DBModule
+	
+	connector JDBCCtr
+	val connectionString: String
+	
+	architecture 
+	components
+	RequestHandler ch
+	DB db
+	
+	connectors 
+	JDBCCtr jdbcCtr
+	
+	attachments
+	connect rh.dbIface and db.dbIface 
+	with jdbcCtr
+	
+	bindings 
+	sendInfo is rh.sendInfo
+	
+	architecture 	
+	components
+	Client client
+	Server server
+	
+	connectors
+	JSONCtr jsonCtr
+	
+	attachments 
+	Connect client.getInfo 
+	and server.sendInfo with jsonCtr
+	
+	entryPoints
+	Client: start
+	\end{lstlisting}
+	
+\end{figure}
 	
 \appendix
 \section{Appendix Title}
