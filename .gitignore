@@ -1,5 +1,7 @@
-sigplanconf-template.aux
-sigplanconf-template.log
+*.aux
+*.log
 //sigplanconf-template.pdf
-sigplanconf-template.synctex.gz
+*.gz
+*.blg
+*.bbl
 
