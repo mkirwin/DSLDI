@@ -48,7 +48,6 @@
 	belowskip=-10pt,
 	basicstyle=\footnotesize\ttfamily,
 	captionpos=b,
-	belowcaptionskip=0pt,
 	columns=flexible,
 	float=t,
 	frame=single,
@@ -72,7 +71,6 @@
 	belowskip=-10pt,
 	basicstyle=\footnotesize\ttfamily,
 	captionpos=b,
-	belowcaptionskip=0pt,
 	columns=flexible,
 	float=t,
 	frame=single,
@@ -95,7 +93,6 @@
 	belowskip=-10pt,
 	basicstyle=\footnotesize\ttfamily,
 	captionpos=b,
-	belowcaptionskip=0pt,
 	columns=flexible,
 	float=t,
 	frame=single,
@@ -122,6 +119,7 @@
 \makeatother
 
 \begin{document}
+\begin{sloppypar}
 
 \special{papersize=8.5in,11in}
 \setlength{\pdfpageheight}{\paperheight}
@@ -219,7 +217,7 @@
 %\item State the lack of support for multiple views in ADLs.
 %\item State that industry practitioners desire support for multiple views. Cite study by Malavolta et. al.
 %\end{itemize}
-The software architecture of a system is the set of structures needed to reason about the system, each consisting of elements of the system, relations among them, and properties of both \cite{SEISwArchDef}. Software architecture enables the system designers to analyze the system's ability to meet quality objectives like performance, reliability, etc. Thus, it facilitates the early detection of design errors and leads to improved software quality. It also provides a blueprint for system implementation and evolution. 
+The software architecture of a system is the set of structures needed to reason about the system, each consisting of elements of the system, relations among them, and properties of both \cite{Clements2010}. Software architecture enables the system designers to analyze the system's ability to meet quality objectives like performance, reliability, etc. Thus, it facilitates the early detection of design errors and leads to improved software quality. It also provides a blueprint for system implementation and evolution. 
 
 To facilitate the different uses of software architecture in system development activities, a number of architecture description languages (ADLs) have been developed \cite{ADLs}. ADLs are formal languages that can be used to represent the architecture of a software system in an unambiguous way. Thus, they provide a rigorous basis for the analysis of system designs. ADLs also enable the various stakeholders to understand the system better and thus aid in system implementation, maintenance and evolution.
 
@@ -252,102 +250,98 @@ In prior work, ArchJava used a custom type system to verify communication integr
 
 \section{\langname}
 
-We are developing \langname, an ADL that would allow software architects to ...
+We are developing \langname, an ADL that would allow software architects to describe the software architecture of a system using multiple views and to guarantee communication integrity even for applications that involve communication across processes, possibly over a network.
 
 \noindent
 \\
-\textbf{Multi-View Architecture Description in \langname.} \citeauthor{Clements2010} \cite{Clements2010} identify three basic types of views: ...
-
-Trinity provides support for these three views.
+\textbf{Multi-View Architecture Description in \langname.} \citeauthor{Clements2010} \cite{Clements2010} identify three basic types of views: a) module view, b) component-and-connector view, and c) allocation view. Trinity provides support for these three views.
 
 \noindent
-\\
-\textit{\textbf{Module view.}} Module view is used to document the principal implementation units of a system, together with the relations among these units. The primary elements in module view are implementation units that provide a coherent set of responsibilities. In \langname, implementation units take the form of capability-based modules.
+\textit{\textbf{Module view.}} The module view is used to document the principal implementation units of a system, together with the relations among these units.
+
+We have designed \langname{} to describe the architecture of systems implemented in the Wyvern programming language. Since Wyvern provides first-class modules \cite{Melicher2017} which can be instantiated, passed as arguments and returned from a function, we use module definitions in Wyvern to implicitly describe the module view by specifying the Wyvern modules that would be used for implementing the system and the dependencies among them.
+
+For example, \lstlistingname{} \ref{moduleview} shows the module view of a client-server system. It consists of a \texttt{Client} module and a \texttt{Server} module. The \texttt{Client} module depends on a module instance of type \texttt{CSIface} and the \texttt{Server} module depends on a module instance of type \texttt{SPlumbing}.
+%The primary elements in module view are implementation units that provide a coherent set of responsibilities. In \langname, implementation units take the form of capability-based modules.
 
 %Every module has a collection of properties associated with it. These properties are intended to express the important information associated with the module, as well as constraints on the module. Sample properties are responsibilities, visibility information, and author or owner.
 
-Modules are related to one another using the depends on relation.
+%Modules are related to one another using the depends on relation.
 
-What is a module view useful for? The module view can be used to determine how a system's source code is decomposed into units, what assumptions each unit can make about services provided by other units, and how these units are aggregated into larger ensembles. The module view can thus be used to create an implementation plan and also to determine how changes to one part of a system might affect other parts and thus reason about the system's modifiability, portability and reuse.
+%What is a module view useful for? The module view can be used to determine how a system's source code is decomposed into units, what assumptions each unit can make about services provided by other units, and how these units are aggregated into larger ensembles. The module view can thus be used to create an implementation plan and also to determine how changes to one part of a system might affect other parts and thus reason about the system's modifiability, portability and reuse.
 
-\begin{lstlisting}[style=modulestyle, caption=Module view of a client/server system, label=moduleview, language=modulelang]
+\begin{lstlisting}[style=modulestyle, caption=Module view of a client/server system, label=moduleview, language=modulelang, belowcaptionskip=0pt]
 resource type CSIface
 	def getVal(key: String): String
-
 module def Client(cPlumbing: CSIface): ClientIface
 	def startClient(): Unit
 		...
-
 module def Server(sPlumb: SPlumbing): ServerIface
 	module def sendInfo(): CSIface
 		def getVal(key: String): String
 			...
-
 	def startServer(): Unit
 		sPlumb.setFn(sendInfo().getVal)
 		...
 \end{lstlisting}
 
 \noindent
-\\
-\textit{\textbf{Component-and-connector view.}} Component-and-connector view expresses runtime behavior. It is described in terms of components and connectors. A component is one of the principal processing units of the executing system. Components might be services, processes, threads, filters, repositories, peers, or clients and servers, to name a few. A connector is the interaction mechanism among components. Connectors include pipes, queues, request/reply protocols, direct invocation, event-driven invocation, etc. Components and connectors can be decomposed into other components and connectors. The decomposition of a component may include connectors and vice versa.
+\textit{\textbf{Component-and-connector view.}} The component-and-connector (C\&C) view expresses runtime behavior. \lstlistingname{} \ref{cncview} shows the C\&C view of our example client-server system. It consists of two \textit{components} (i.e. processes): a \texttt{client} component of component type \texttt{Client} and a \texttt{server} component of component type \texttt{Client}.
 
-\begin{lstlisting}[style=cncstyle, caption=C\&C view of the client/server system, label=cncview, language=cnclang]
+Components have \textit{ports} which are interfaces through which a component interacts with the components it is connected to. A \texttt{provides} port consists of methods that are implemented by the component, while a \texttt{requires} port consists of methods that must be implemented by a component connected to this port.
+
+For components to interact with each other, they must be connected together with a \textit{connector}. In \lstlistingname{} \ref{cncview}, the \texttt{client} and \texttt{server} components interact via the \texttt{jsonCtr} connector. The \texttt{jsonCtr} connector enables the \texttt{client} and \texttt{server} components to communicate by passing JSON data between each other.
+%The \texttt{Client} and \texttt{Server} component types correspond to the \texttt{Client} and \texttt{Server} modules in the module view respectively.
+%It is described in terms of components and connectors. A component is one of the principal processing units of the executing system. Components might be services, processes, threads, filters, repositories, peers, or clients and servers, to name a few. A connector is the interaction mechanism among components. Connectors include pipes, queues, request/reply protocols, direct invocation, event-driven invocation, etc. Components and connectors can be decomposed into other components and connectors. The decomposition of a component may include connectors and vice versa.
+
+\begin{lstlisting}[style=cncstyle, caption=C\&C view of the client/server system, label=cncview, language=cnclang, belowcaptionskip=0pt]
 component Client
 	port getInfo: requires CSIface
-
 component Server
 	port sendInfo: provides CSIface
-
 connector JSONCtr
 	val host: IPAddress
 	val prt: Int
-
 architecture ClientServer
 	components
 		Client client
 		Server server
-
 	connectors
 		JSONCtr jsonCtr
-
 	connections
 		connect client.getInfo and server.sendInfo
 			with jsonCtr
-
-	entryPoints
-		client: startClient
-		server: startServer
 \end{lstlisting}
+%
+%	entryPoints
+%		client: startClient
+%		server: startServer
 
 \noindent
-\\
-\textit{\textbf{Allocation view.}} Allocation view describes the mapping of software units to elements of an environment in which the software is developed or executes. The environment might be the hardware, the file systems supporting development or deployment, or the development organization(s).
+\textit{\textbf{Allocation view.}} Allocation view describes the mapping of software units to elements of an environment in which the software executes. In particular, software elements from the C\&C view are allocated to the hardware of the computing platform on which the software executes. For example, \lstlistingname{} \ref{allocationview} shows the allocation view for our client-server system. It specifies the IP address and port of the \texttt{server} component connected by the \texttt{jsonCtr} connector.
+%The environment might be the hardware, the file systems supporting development or deployment, or the development organization(s).
 
-\begin{lstlisting}[style=allocationstyle, caption=Allocation view of the client/server system, label=allocationview, language=allocationlang]
+\begin{lstlisting}[style=allocationstyle, caption=Allocation view of the client/server system, label=allocationview, language=allocationlang, belowcaptionskip=0pt]
 deployment CSDeployment extends ClientServer
-	jsonCtr.host = 127.0.0.1
-	jsonCtr.port = 9090
+	jsonCtr.host = 192.168.1.1
+	jsonCtr.prt = 9090
 \end{lstlisting}
 
-\begin{lstlisting}[style=modulestyle, caption=Plumbing code generated for the client, label=clientplumbing, language=modulelang]
+\begin{lstlisting}[style=modulestyle, caption=Plumbing code generated for the client, label=clientplumbing, language=modulelang, belowcaptionskip=-5pt]
 module def cPlumbing(tcpClient: TCPClient): CSIface
 	def getVal(key: String): String
-		tcpClient.connect(IPAddress("127.0.0.1"), 9090)
+		tcpClient.connect(IPAddress("192.168.1.1"),9090)
 		...
 
 val tcpClient = TCPClient()
 val plumbing = cPlumbing(tcpClient)
-val c = client(plumbing)
-c.start()
+val client = Client(plumbing)
+c.startClient()
 \end{lstlisting}
-
-\lstlistingname~\ref{cncview}
-\cite{Nistor2013} \cite{Melicher2017}
 
 \noindent
 \\
-\textbf{Architectural Control in \langname.}
+\textbf{Architectural Control in \langname.} Communication integrity is guaranteed in \langname{} by means of the non-transitive authority property of Wyvern's capability-based module system \cite{Melicher2017}. For example, \lstlistingname{} \ref{clientplumbing} shows the plumbing code generated for the \texttt{client} component from the architecture description to facilitate its communication with the \texttt{server} component using the \texttt{jsonCtr} connector. Note in lines 6 to 8 that the \texttt{Client} module does not have a direct reference to the \texttt{TCPClient} module. Since authority is non-transitive in Wyvern, therefore the \texttt{Client} module would not be able to call the \texttt{connect} method of the \texttt{TCPClient} module. Thus, it would not be able to make connections to arbitrary hosts over the network.
 
 %\appendix
 %\section{Appendix Title}
@@ -374,4 +368,5 @@ c.start()
 %\end{thebibliography}
 
 
+\end{sloppypar}
 \end{document}
