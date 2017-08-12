@@ -44,7 +44,27 @@
 \definecolor{gray}{RGB}{128, 128, 128}
 
 \lstdefinestyle{modulestyle}{
-	basicstyle=\scriptsize
+	aboveskip=0pt,
+	belowskip=-10pt,
+	basicstyle=\footnotesize\ttfamily,
+	captionpos=b,
+	belowcaptionskip=0pt,
+	columns=flexible,
+	float=t,
+	frame=single,
+	keywordstyle=\color{blue},
+	numbers=left,
+	numberstyle=\color{gray}\scriptsize\fontfamily{cmr}\selectfont,
+	numbersep=8pt,
+	tabsize=2,
+	xleftmargin=19pt,
+	framexleftmargin=15pt,
+	framexrightmargin=-4pt
+}
+
+
+\lstdefinelanguage{modulelang}{
+	morekeywords={resource, type, def, module, val, var}
 }
 
 \lstdefinestyle{cncstyle}{
@@ -52,10 +72,10 @@
 	belowskip=-10pt,
 	basicstyle=\footnotesize\ttfamily,
 	captionpos=b,
+	belowcaptionskip=0pt,
 	columns=flexible,
 	float=t,
 	frame=single,
-	morekeywords={component},
 	keywordstyle=\color{blue},
 	numbers=left,
 	numberstyle=\color{gray}\scriptsize\fontfamily{cmr}\selectfont,
@@ -67,14 +87,39 @@
 }
 
 \lstdefinelanguage{cnclang}{
-	morekeywords={component, port},
+	morekeywords={component, port, connector, val, architecture, components, connectors, connections, connect, and, with, entryPoints}
 }
 
 \lstdefinestyle{allocationstyle}{
+	aboveskip=0pt,
+	belowskip=-10pt,
+	basicstyle=\footnotesize\ttfamily,
+	captionpos=b,
+	belowcaptionskip=0pt,
+	columns=flexible,
+	float=t,
+	frame=single,
+	keywordstyle=\color{blue},
+	numbers=left,
+	numberstyle=\color{gray}\scriptsize\fontfamily{cmr}\selectfont,
+	numbersep=8pt,
+	tabsize=2,
+	xleftmargin=19pt,
+	framexleftmargin=15pt,
+	framexrightmargin=-4pt
+}
+
+\lstdefinelanguage{allocationlang}{
+	morekeywords={deployment, extends}
 }
 
 \DeclareCaptionFormat{listing}{\textbf{#1.} #3}
 \captionsetup[lstlisting]{format=listing}
+
+% FIXME: Comment the following when you need to add copyright information.
+\makeatletter
+\def\@copyrightspace{\relax}
+\makeatother
 
 \begin{document}
 
@@ -125,9 +170,9 @@
 
 \maketitle
 
-\begin{abstract}
-This is the text of the abstract.
-\end{abstract}
+%\begin{abstract}
+%This is the text of the abstract.
+%\end{abstract}
 
 % 2012 ACM Computing Classification System (CSS) concepts
 % Generate at 'http://dl.acm.org/ccs/ccs.cfm'.
@@ -215,19 +260,90 @@ We are developing \langname, an ADL that would allow software architects to ...
 
 Trinity provides support for these three views.
 
-Module view:
+\noindent
+\\
+\textit{\textbf{Module view.}} Module view is used to document the principal implementation units of a system, together with the relations among these units. The primary elements in module view are implementation units that provide a coherent set of responsibilities. In \langname, implementation units take the form of capability-based modules.
 
-Component-and-connector view:
+%Every module has a collection of properties associated with it. These properties are intended to express the important information associated with the module, as well as constraints on the module. Sample properties are responsibilities, visibility information, and author or owner.
 
-Deployment view:
+Modules are related to one another using the depends on relation.
 
-\begin{lstlisting}[style=cncstyle, caption=Caption, label=cncview, language=cnclang]
-component Test
-	port port1
-	port port2
+What is a module view useful for? The module view can be used to determine how a system's source code is decomposed into units, what assumptions each unit can make about services provided by other units, and how these units are aggregated into larger ensembles. The module view can thus be used to create an implementation plan and also to determine how changes to one part of a system might affect other parts and thus reason about the system's modifiability, portability and reuse.
+
+\begin{lstlisting}[style=modulestyle, caption=Module view of a client/server system, label=moduleview, language=modulelang]
+resource type CSIface
+	def getVal(key: String): String
+
+module def Client(cPlumbing: CSIface): ClientIface
+	def startClient(): Unit
+		...
+
+module def Server(sPlumb: SPlumbing): ServerIface
+	module def sendInfo(): CSIface
+		def getVal(key: String): String
+			...
+
+	def startServer(): Unit
+		sPlumb.setFn(sendInfo().getVal)
+		...
+\end{lstlisting}
+
+\noindent
+\\
+\textit{\textbf{Component-and-connector view.}} Component-and-connector view expresses runtime behavior. It is described in terms of components and connectors. A component is one of the principal processing units of the executing system. Components might be services, processes, threads, filters, repositories, peers, or clients and servers, to name a few. A connector is the interaction mechanism among components. Connectors include pipes, queues, request/reply protocols, direct invocation, event-driven invocation, etc. Components and connectors can be decomposed into other components and connectors. The decomposition of a component may include connectors and vice versa.
+
+\begin{lstlisting}[style=cncstyle, caption=C\&C view of the client/server system, label=cncview, language=cnclang]
+component Client
+	port getInfo: requires CSIface
+
+component Server
+	port sendInfo: provides CSIface
+
+connector JSONCtr
+	val host: IPAddress
+	val prt: Int
+
+architecture ClientServer
+	components
+		Client client
+		Server server
+
+	connectors
+		JSONCtr jsonCtr
+
+	connections
+		connect client.getInfo and server.sendInfo
+			with jsonCtr
+
+	entryPoints
+		client: startClient
+		server: startServer
+\end{lstlisting}
+
+\noindent
+\\
+\textit{\textbf{Allocation view.}} Allocation view describes the mapping of software units to elements of an environment in which the software is developed or executes. The environment might be the hardware, the file systems supporting development or deployment, or the development organization(s).
+
+\begin{lstlisting}[style=allocationstyle, caption=Allocation view of the client/server system, label=allocationview, language=allocationlang]
+deployment CSDeployment extends ClientServer
+	jsonCtr.host = 127.0.0.1
+	jsonCtr.port = 9090
+\end{lstlisting}
+
+\begin{lstlisting}[style=modulestyle, caption=Plumbing code generated for the client, label=clientplumbing, language=modulelang]
+module def cPlumbing(tcpClient: TCPClient): CSIface
+	def getVal(key: String): String
+		tcpClient.connect(IPAddress("127.0.0.1"), 9090)
+		...
+
+val tcpClient = TCPClient()
+val plumbing = cPlumbing(tcpClient)
+val c = client(plumbing)
+c.start()
 \end{lstlisting}
 
 \lstlistingname~\ref{cncview}
+\cite{Nistor2013} \cite{Melicher2017}
 
 \noindent
 \\
